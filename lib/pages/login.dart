@@ -36,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     } catch (e) {
       setState(() {
-        _errorMessage = 'Invalid credentials. Please try again.';
+        _errorMessage = e.toString();
       });
     } finally {
       setState(() {
@@ -90,11 +90,10 @@ class _LoginPageState extends State<LoginPage> {
             // Contact Number TextField
             TextField(
               controller: _contactNumberController,
-              keyboardType: TextInputType.phone,
               decoration: InputDecoration(
-                labelText: "Contact Number",
+                labelText: "Email Address",
                 labelStyle: TextStyle(color: Colors.black),
-                hintText: "Enter your contact number",
+                hintText: "Enter your email address",
                 border: OutlineInputBorder(),
                 focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.black),
