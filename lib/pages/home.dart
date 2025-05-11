@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 import 'package:test_app/pages/login.dart';
-import 'package:test_app/pages/child.dart';  // Import child.dart
-import 'package:test_app/pages/forum.dart';  // Import forum.dart
+import 'package:test_app/pages/child.dart'; // Import child.dart
+import 'package:test_app/pages/forum.dart';
+import 'package:test_app/services/announcement_service.dart'; // Import forum.dart
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,9 +19,9 @@ class _HomePageState extends State<HomePage> {
 
   // List of pages for the bottom navigation
   final List<Widget> _pages = [
-    HomePageContent(),  // Home page
-    ChildPage(),        // Child page placeholder
-    ForumPage(),        // Forum page placeholder
+    HomePageContent(), // Home page
+    ChildPage(), // Child page placeholder
+    ForumPage(), // Forum page placeholder
   ];
 
   @override
@@ -50,13 +51,15 @@ class _HomePageState extends State<HomePage> {
                 flexibleSpace: FlexibleSpaceBar(
                   centerTitle: _scrolled,
                   titlePadding: EdgeInsets.only(
-                      left:  16,
-                      right: 16,
-                      bottom: 16),
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                  ),
                   title: Row(
-                    mainAxisAlignment: _scrolled
-                        ? MainAxisAlignment.center
-                        : MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment:
+                        _scrolled
+                            ? MainAxisAlignment.center
+                            : MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         "NutriSafari",
@@ -71,7 +74,9 @@ class _HomePageState extends State<HomePage> {
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => LoginPage()), // Redirect to LoginPage
+                              MaterialPageRoute(
+                                builder: (context) => LoginPage(),
+                              ), // Redirect to LoginPage
                             );
                           },
                           child: SvgPicture.asset(
@@ -98,18 +103,9 @@ class _HomePageState extends State<HomePage> {
           });
         },
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.child_care),
-            label: 'Child',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.forum),
-            label: 'Forum',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.child_care), label: 'Child'),
+          BottomNavigationBarItem(icon: Icon(Icons.forum), label: 'Forum'),
         ],
       ),
     );
@@ -117,128 +113,90 @@ class _HomePageState extends State<HomePage> {
 }
 
 // Home Page Content
-class HomePageContent extends StatelessWidget {
+class HomePageContent extends StatefulWidget {
   const HomePageContent({super.key});
 
   @override
+  State<HomePageContent> createState() => _HomePageContentState();
+}
+
+class _HomePageContentState extends State<HomePageContent> {
+  late Future<List<Map<String, dynamic>>> _announcements;
+
+  @override
+  void initState() {
+    super.initState();
+    _announcements = AnnouncementService.fetchAllAnnouncement();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView( // ✅ Makes everything scrollable
+    return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            alignment: Alignment.center,
-            color: Color(0xFF66CA6A),
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Text(
-              'WELCOME Gian Patrick Victoriano!',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
+          // Your other widgets (WELCOME, Latest News, etc.)
           SizedBox(height: 16),
-          Container(
-            alignment: Alignment.center,
-            child: Text(
-              'Latest News',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
+          // Announcements Section
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: _announcements,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text("Error loading announcements"));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(child: Text("No announcements available"));
+              }
+
+              return Column(
+                children:
+                    snapshot.data!.map((announcement) {
+                      // Format the created_at date to a readable string
+                      String formattedDate =
+                          announcement['created_at'] != null
+                              ? DateTime.parse(
+                                announcement['created_at'],
+                              ).toLocal().toString()
+                              : 'No date available';
+
+                      return Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(16),
+                        margin: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFEFFAEF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Color(0xFF66CA6A)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "📢 ${announcement['title']}",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF66CA6A),
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text("🗓️ $formattedDate"),
+                            SizedBox(height: 8),
+                            Text(
+                              announcement['description'] ??
+                                  'No content available',
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+              );
+            },
           ),
-          // Slideshow box
-          Container(
-            margin: EdgeInsets.all(16),
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 8,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: _ImageSlideshow(),
-          ),
-          Container(
-            alignment: Alignment.center,
-            child: Text(
-              'Announcements',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-          ),
-          // ➕ Current Event Overview Section
-          SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Color(0xFFEFFAEF),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Color(0xFF66CA6A)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Current Event Overview",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF66CA6A),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  "📅 Feeding Program - July 25, 2025\n🕘 9:00 AM - 12:00 PM\n📍 Barangay Hall, Main Hall",
-                  style: TextStyle(fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Color(0xFFEFFAEF),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Color(0xFF66CA6A)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Current Event Overview",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF66CA6A),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  "📅 Feeding Program - July 25, 2025\n🕘 9:00 AM - 12:00 PM\n📍 Barangay Hall, Main Hall",
-                  style: TextStyle(fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 16),
         ],
       ),
     );
@@ -334,15 +292,13 @@ class _ImageSlideshowState extends State<_ImageSlideshow> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
             _slides.length,
-                (index) => Container(
+            (index) => Container(
               margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
               width: 8,
               height: 8,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _currentIndex == index
-                    ? Color(0xFF66CA6A)
-                    : Colors.grey,
+                color: _currentIndex == index ? Color(0xFF66CA6A) : Colors.grey,
               ),
             ),
           ),
@@ -353,9 +309,7 @@ class _ImageSlideshowState extends State<_ImageSlideshow> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => HomePage(),
-              ),
+              MaterialPageRoute(builder: (_) => HomePage()),
             );
           },
           style: ElevatedButton.styleFrom(
@@ -365,13 +319,9 @@ class _ImageSlideshowState extends State<_ImageSlideshow> {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: Text(
-            "Read More",
-            style: TextStyle(color: Colors.white),
-          ),
+          child: Text("Read More", style: TextStyle(color: Colors.white)),
         ),
       ],
     );
   }
 }
-
