@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:test_app/pages/home.dart';
 import 'package:test_app/pages/signup.dart';
+import 'package:test_app/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,7 +12,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _contactNumberController = TextEditingController();
+  final TextEditingController _contactNumberController =
+      TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   String _errorMessage = '';
@@ -24,29 +25,16 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final response = await Supabase.instance.client
-          .from('check')
-          .select()
-          .eq('phone', _contactNumberController.text)
-          .eq('password', _passwordController.text)
-          .limit(1)  // Make sure only one row is returned
-          .single(); // This will work if we limit the response to one row
+      final response = await AuthService.login(
+        _contactNumberController.text,
+        _passwordController.text,
+      );
 
-      if (response != null) {
-        print('Login successful: $response');
-
-        // Redirect to HomePage after successful login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()), // Replace with HomePage
-        );
-      } else {
-        setState(() {
-          _errorMessage = 'Invalid credentials. Please try again.';
-        });
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
     } catch (e) {
-      print('Error fetching data: $e');
       setState(() {
         _errorMessage = 'Invalid credentials. Please try again.';
       });
@@ -56,7 +44,6 @@ class _LoginPageState extends State<LoginPage> {
       });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -97,10 +84,7 @@ class _LoginPageState extends State<LoginPage> {
             Text(
               "Welcome Back",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.black,
-              ),
+              style: TextStyle(fontSize: 15, color: Colors.black),
             ),
             SizedBox(height: 16),
             // Contact Number TextField
@@ -115,7 +99,10 @@ class _LoginPageState extends State<LoginPage> {
                 focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.black),
                 ),
-                contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 15,
+                  horizontal: 16,
+                ),
               ),
             ),
             SizedBox(height: 16),
@@ -131,7 +118,10 @@ class _LoginPageState extends State<LoginPage> {
                 focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.black),
                 ),
-                contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 15,
+                  horizontal: 16,
+                ),
               ),
             ),
             SizedBox(height: 32),
@@ -155,16 +145,17 @@ class _LoginPageState extends State<LoginPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: _isLoading
-                  ? CircularProgressIndicator(color: Colors.white)
-                  : Text(
-                "Login",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+              child:
+                  _isLoading
+                      ? CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                        "Login",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
             ),
             SizedBox(height: 16),
             // Sign Up Link

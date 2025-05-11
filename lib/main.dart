@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:test_app/pages/login.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Supabase.initialize(
-    url:"https://ugmnvqrelrljcpdtzpqk.supabase.co",
-    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnbW52cXJlbHJsamNwZHR6cHFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1OTg3NzEsImV4cCI6MjA2MjE3NDc3MX0.hPSlLs6mYg3ZHRH-8k3FGpMSe7lXjVxwtVe2AX5uO8U",
-  );
   runApp(const MyApp());
-
 }
 
 class MyApp extends StatelessWidget {
@@ -21,7 +15,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
-      home: LoginPage()
+      home: LoginPage(),
     );
   }
 }
