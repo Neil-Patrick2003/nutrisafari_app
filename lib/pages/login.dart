@@ -1,0 +1,188 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:test_app/pages/home.dart';
+import 'package:test_app/pages/signup.dart';
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _contactNumberController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+  String _errorMessage = '';
+
+  // ✅ Method to handle the login API call
+  void _login() async {
+    setState(() {
+      _isLoading = true; // Set loading state when the login is in progress
+    });
+
+    try {
+      final response = await Supabase.instance.client
+          .from('check')
+          .select()
+          .eq('phone', _contactNumberController.text)
+          .eq('password', _passwordController.text)
+          .limit(1)  // Make sure only one row is returned
+          .single(); // This will work if we limit the response to one row
+
+      if (response != null) {
+        print('Login successful: $response');
+
+        // Redirect to HomePage after successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()), // Replace with HomePage
+        );
+      } else {
+        setState(() {
+          _errorMessage = 'Invalid credentials. Please try again.';
+        });
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+      setState(() {
+        _errorMessage = 'Invalid credentials. Please try again.';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false; // Reset loading state after request is complete
+      });
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Logo and Title Row
+            Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo
+                  SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: SvgPicture.asset('assets/icons/logo.svg'),
+                  ),
+                  SizedBox(width: 8),
+                  // Title Text
+                  Text(
+                    "NutriSafari",
+                    style: TextStyle(
+                      fontSize: 45,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF66CA6A),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
+            // Welcome Back Text
+            Text(
+              "Welcome Back",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.black,
+              ),
+            ),
+            SizedBox(height: 16),
+            // Contact Number TextField
+            TextField(
+              controller: _contactNumberController,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: "Contact Number",
+                labelStyle: TextStyle(color: Colors.black),
+                hintText: "Enter your contact number",
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+              ),
+            ),
+            SizedBox(height: 16),
+            // Password TextField
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: "Password",
+                labelStyle: TextStyle(color: Colors.black),
+                hintText: "Enter your password",
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+                contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+              ),
+            ),
+            SizedBox(height: 32),
+            // Error message (if any)
+            if (_errorMessage.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(
+                  _errorMessage,
+                  style: TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            // Login Button
+            ElevatedButton(
+              onPressed: _isLoading ? null : _login, // Trigger login
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF66CA6A),
+                padding: EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _isLoading
+                  ? CircularProgressIndicator(color: Colors.white)
+                  : Text(
+                "Login",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+            // Sign Up Link
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignupPage()),
+                );
+              },
+              child: Text(
+                "Don't have an account? Sign Up",
+                style: TextStyle(color: Color(0xFF66CA6A)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
