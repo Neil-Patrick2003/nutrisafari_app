@@ -408,25 +408,7 @@ class _ForumPageState extends State<ForumPage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Padding(
-        //   padding: const EdgeInsets.all(16.0),
-        //   child: TextField(
-        //     decoration: InputDecoration(
-        //       hintText: 'Search for keywords',
-        //       prefixIcon: Icon(Icons.search),
-        //       border: OutlineInputBorder(
-        //         borderRadius: BorderRadius.circular(12),
-        //       ),
-        //       filled: true,
-        //       fillColor: Colors.grey[100],
-        //     ),
-        //     onChanged: (value) {
-        //       setState(() {
-        //         _searchQuery = value;
-        //       });
-        //     },
-        //   ),
-        // ),
+        // Toggle Buttons to switch between Blogs and Questions
         Row(
           children: [
             Expanded(
@@ -483,6 +465,8 @@ class _ForumPageState extends State<ForumPage> {
             ),
           ],
         ),
+
+        // Show 'Ask a Question' button only when viewing questions
         if (!_isViewingBlogs)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -494,6 +478,8 @@ class _ForumPageState extends State<ForumPage> {
               ),
             ),
           ),
+
+        // Show the correct list (Blogs or Questions)
         Expanded(
           child: ListView.builder(
             padding: EdgeInsets.all(16),
@@ -503,31 +489,33 @@ class _ForumPageState extends State<ForumPage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: _openCreateBlog,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                    // Create Blog Button (only show once)
+                    if (index == 0)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: _openCreateBlog,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          icon: Icon(Icons.create),
+                          label: Text(
+                            'Create New Blog',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                        icon: Icon(Icons.create),
-                        label: Text(
-                          'Create New Blog',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                       ),
-                    ),
                     Card(
                       margin: EdgeInsets.only(bottom: 12),
                       elevation: 3,
@@ -564,7 +552,6 @@ class _ForumPageState extends State<ForumPage> {
                 );
               } else {
                 final question = _myQuestions[index];
-
                 if (!_replyControllers.containsKey(index)) {
                   _replyControllers[index] = TextEditingController();
                 }

@@ -23,7 +23,7 @@ class AuthService {
       prefs.setString("auth.token", data["access_token"]);
       prefs.setString("auth.user.name", data["user"]['name']);
     } else {
-      throw Exception('Something went wrong');
+      throw Exception('Invalid Credentials');
     }
     return data;
   }

@@ -12,12 +12,9 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _contactNumberController = TextEditingController(
-    text: "neilpatrick.personal@gmail.com",
-  );
-  final TextEditingController _passwordController = TextEditingController(
-    text: "12345678",
-  );
+  final TextEditingController _contactNumberController =
+      TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   String _errorMessage = '';
 
@@ -160,19 +157,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
             ),
             SizedBox(height: 16),
+
             // Sign Up Link
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SignupPage()),
-                );
-              },
-              child: Text(
-                "Don't have an account? Sign Up",
-                style: TextStyle(color: Color(0xFF66CA6A)),
-              ),
-            ),
           ],
         ),
       ),
