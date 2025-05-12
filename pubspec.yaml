@@ -41,6 +41,7 @@ dependencies:
   mysql1: ^0.20.0
   supabase_flutter: ^2.9.0
   shared_preferences: ^2.5.3
+  flutter_html: ^3.0.0
 
 dev_dependencies:
   flutter_test: 

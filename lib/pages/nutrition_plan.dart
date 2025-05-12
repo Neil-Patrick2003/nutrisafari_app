@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:test_app/services/nutrition_controller.dart';
+import 'package:flutter_html/flutter_html.dart';
+import 'package:test_app/services/nutrition_controller.dart'; // For rendering HTML if needed
 
 class NutritionPlanPage extends StatefulWidget {
   const NutritionPlanPage({Key? key}) : super(key: key);
@@ -12,10 +12,6 @@ class NutritionPlanPage extends StatefulWidget {
 class _NutritionPlanPageState extends State<NutritionPlanPage> {
   late Future<List<Map<String, dynamic>>> _plans;
 
-  String getTodayName() {
-    return DateFormat('EEEE').format(DateTime.now());
-  }
-
   @override
   void initState() {
     super.initState();
@@ -24,11 +20,9 @@ class _NutritionPlanPageState extends State<NutritionPlanPage> {
 
   @override
   Widget build(BuildContext context) {
-    String today = getTodayName();
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nutrition Plan'),
+        title: Text('Nutrition Plans'),
         backgroundColor: Color(0xFF66CA6A),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
@@ -37,11 +31,9 @@ class _NutritionPlanPageState extends State<NutritionPlanPage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(
-              child: Text("Error loading plans: ${snapshot.error}"),
-            );
+            return Center(child: Text("Error: ${snapshot.error}"));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text("No plans available."));
+            return Center(child: Text("No nutrition plans available."));
           }
 
           final plans = snapshot.data!;
@@ -51,39 +43,72 @@ class _NutritionPlanPageState extends State<NutritionPlanPage> {
             itemCount: plans.length,
             itemBuilder: (context, index) {
               final plan = plans[index];
-              final day = plan['day'] ?? 'Unknown';
-              final meals = plan['meals'] ?? []; // Assumes 'meals' is a List
-
-              bool isToday = day == today;
 
               return Card(
                 margin: EdgeInsets.only(bottom: 12),
                 elevation: 3,
-                color: isToday ? Color(0xFFd0f0d2) : null,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        day,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF66CA6A),
+                child: InkWell(
+                  onTap: () {
+                    // Show dialog with full description
+                    showDialog(
+                      context: context,
+                      builder:
+                          (context) => AlertDialog(
+                            title: Text("📋 ${plan['title']}"),
+                            content: SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "🎯 Goal: ${plan['goal_type'] ?? 'N/A'}",
+                                  ),
+                                  SizedBox(height: 8),
+                                  Html(
+                                    data:
+                                        plan['description'] ?? "No description",
+                                  ),
+                                ],
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text("Close"),
+                              ),
+                            ],
+                          ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          plan['title'] ?? "Untitled",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF66CA6A),
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 8),
-                      ...(meals as List<dynamic>).map(
-                        (meal) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Text(meal.toString()),
+                        SizedBox(height: 8),
+                        Text("Goal: ${plan['goal_type'] ?? 'N/A'}"),
+                        SizedBox(height: 8),
+                        Html(
+                          data: plan['description'] ?? '',
+                          style: {
+                            "body": Style(
+                              margin: Margins.zero,
+                              padding: HtmlPaddings.zero,
+                            ),
+                          },
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );

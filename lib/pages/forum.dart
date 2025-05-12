@@ -27,8 +27,8 @@ class _ForumPageState extends State<ForumPage> {
 
   File? _selectedImage;
 
-  late List<Map<String, dynamic>> _myQuestions;
-  late List<Map<String, dynamic>> _blogs;
+  List<Map<String, dynamic>> _myQuestions = [];
+  List<Map<String, dynamic>> _blogs = [];
   final Map<int, TextEditingController> _replyControllers = {};
 
   @override
