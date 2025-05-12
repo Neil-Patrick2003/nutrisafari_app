@@ -3,17 +3,39 @@ import 'package:intl/intl.dart'; // Add intl package to pubspec.yaml if not alre
 
 class NutritionPlanPage extends StatelessWidget {
   final Map<String, List<String>> mealPlan = {
-    'Monday': ['Breakfast: Oatmeal with banana', 'Lunch: Chicken and rice', 'Dinner: Veggie soup'],
-    'Tuesday': ['Breakfast: Scrambled eggs and toast', 'Lunch: Fish with sweet potatoes', 'Dinner: Pasta with tomato sauce'],
-    'Wednesday': ['Breakfast: Yogurt with fruits', 'Lunch: Beef stew and veggies', 'Dinner: Rice and steamed broccoli'],
-    'Thursday': ['Breakfast: Pancakes with berries', 'Lunch: Grilled chicken sandwich', 'Dinner: Vegetable stir-fry'],
-    'Friday': ['Breakfast: Cereal with milk', 'Lunch: Tuna salad wrap', 'Dinner: Baked salmon with quinoa'],
+    'Monday': [
+      'Breakfast: Oatmeal with banana',
+      'Lunch: Chicken and rice',
+      'Dinner: Veggie soup',
+    ],
+    'Tuesday': [
+      'Breakfast: Scrambled eggs and toast',
+      'Lunch: Fish with sweet potatoes',
+      'Dinner: Pasta with tomato sauce',
+    ],
+    'Wednesday': [
+      'Breakfast: Yogurt with fruits',
+      'Lunch: Beef stew and veggies',
+      'Dinner: Rice and steamed broccoli',
+    ],
+    'Thursday': [
+      'Breakfast: Pancakes with berries',
+      'Lunch: Grilled chicken sandwich',
+      'Dinner: Vegetable stir-fry',
+    ],
+    'Friday': [
+      'Breakfast: Cereal with milk',
+      'Lunch: Tuna salad wrap',
+      'Dinner: Baked salmon with quinoa',
+    ],
   };
 
   NutritionPlanPage({super.key});
 
   String getTodayName() {
-    return DateFormat('EEEE').format(DateTime.now()); // Returns full day name like 'Monday'
+    return DateFormat(
+      'EEEE',
+    ).format(DateTime.now()); // Returns full day name like 'Monday'
   }
 
   @override
@@ -38,7 +60,9 @@ class NutritionPlanPage extends StatelessWidget {
             margin: EdgeInsets.only(bottom: 12),
             elevation: 3,
             color: isToday ? Color(0xFFd0f0d2) : null, // Highlight today
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -53,10 +77,12 @@ class NutritionPlanPage extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 8),
-                  ...meals.map((meal) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Text(meal),
-                  )),
+                  ...meals.map(
+                    (meal) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Text(meal),
+                    ),
+                  ),
                 ],
               ),
             ),

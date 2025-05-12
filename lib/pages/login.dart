@@ -12,9 +12,12 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _contactNumberController =
-      TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _contactNumberController = TextEditingController(
+    text: "neilpatrick.personal@gmail.com",
+  );
+  final TextEditingController _passwordController = TextEditingController(
+    text: "12345678",
+  );
   bool _isLoading = false;
   String _errorMessage = '';
 

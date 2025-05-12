@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:test_app/services/blog_service.dart';
+import 'package:test_app/services/forum_service.dart';
+import 'package:test_app/services/post_service.dart';
 
 class ForumPage extends StatefulWidget {
   const ForumPage({super.key});
@@ -8,149 +11,305 @@ class ForumPage extends StatefulWidget {
 }
 
 class _ForumPageState extends State<ForumPage> {
-  String _selectedCategory = 'All';
+  final _TopicController = TextEditingController();
+
+  final _replyController = TextEditingController();
   String _searchQuery = '';
   bool _isViewingBlogs = true;
   bool _showingMyQuestions = false;
 
-  final List<Map<String, dynamic>> _myQuestions = [
-    {
-      'title': 'How to boost my toddler’s appetite?',
-      'category': 'Nutrition',
-      'question': 'My 2-year-old barely eats anything lately, any advice?',
-      'replies': [
-        {'text': 'Try offering small meals more frequently.', 'role': 'Health Worker'},
-      ],
-      'newReply': '',
-      'isExpanded': false,
-    },
-  ];
+  late List<Map<String, dynamic>> _myQuestions;
+  late List<Map<String, dynamic>> _blogs;
+  final Map<int, TextEditingController> _replyControllers = {};
 
-  final List<Map<String, String>> _blogs = [
-    {
-      'title': 'How can I encourage my child to eat more vegetables?',
-      'category': 'Nutrition',
-      'image': 'assets/images/vegetables.jpg',
-    },
-    {
-      'title': 'What’s the normal height for a 5-year-old?',
-      'category': 'Growth',
-      'image': 'assets/images/height.jpg',
-    },
-    {
-      'title': 'Are vitamin supplements necessary for toddlers?',
-      'category': 'Health',
-      'image': 'assets/images/vitamin.jpg',
-    },
-    {
-      'title': 'How do I manage my child’s screen time?',
-      'category': 'Parenting',
-      'image': 'assets/images/screentime.jpg',
-    },
-  ];
-
-  final List<Map<String, dynamic>> _questions = [
-    {
-      'title': 'What are good snacks for toddlers?',
-      'category': 'Nutrition',
-      'question': 'I want to give my toddler healthy snacks, any ideas?',
-      'replies': [
-        {'text': 'Try fruit slices, yogurt, or small cheese cubes.', 'role': 'Health Worker'},
-        {'text': 'I give my daughter apple slices with peanut butter.', 'role': 'Parent'},
-      ],
-      'newReply': '',
-      'isExpanded': false,
-    },
-    {
-      'title': 'Is thumb-sucking bad for my child?',
-      'category': 'Parenting',
-      'question': 'Should I be worried about my child sucking their thumb?',
-      'replies': [
-        {'text': 'If it continues past age 4-5, it might affect teeth alignment.', 'role': 'Health Worker'},
-      ],
-      'newReply': '',
-      'isExpanded': false,
-    },
-  ];
-
-  final List<String> _categories = ['All', 'Nutrition', 'Growth', 'Health', 'Parenting'];
-
-  List<Map<String, dynamic>> get _displayedQuestions {
-    final source = _showingMyQuestions ? _myQuestions : _questions;
-    return source.where((question) {
-      final matchesCategory = _selectedCategory == 'All' || question['category'] == _selectedCategory;
-      final matchesSearch = _searchQuery.isEmpty ||
-          question['title'].toLowerCase().contains(_searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    }).toList();
+  @override
+  void initState() {
+    super.initState();
+    _loadBlogs();
+    _loadForums();
   }
 
-  void _openCreateQuestionDialog() {
-    String newQuestion = '';
-    String selectedCategoryForNewQuestion = 'Nutrition';
+  @override
+  void dispose() {
+    // Dispose of all controllers when the page is disposed
+    _replyControllers.forEach((key, controller) {
+      controller.dispose();
+    });
+    super.dispose();
+  }
 
+  // Asynchronous method to load forum data
+  Future<void> _loadForums() async {
+    try {
+      List<Map<String, dynamic>> forums = await ForumService.fetchAllForums();
+      setState(() {
+        _myQuestions = forums;
+      });
+    } catch (e) {
+      // Handle any errors here (e.g., show a snackbar or alert)
+      print('Error: $e');
+    }
+  }
+
+  Future<void> _loadBlogs() async {
+    try {
+      List<Map<String, dynamic>> blogs = await BlogService.fetchBlogs();
+      setState(() {
+        _blogs = blogs;
+      });
+    } catch (e) {
+      // Handle any errors here (e.g., show a snackbar or alert)
+      print('Error: $e');
+    }
+  }
+
+  void _openCreateBlog() {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Create a New Question'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(
+              16,
+            ), // Rounded corners for the dialog
+          ),
+          backgroundColor: Colors.white, // White background for the dialog
+          titlePadding: EdgeInsets.all(16), // Padding for the title
+          title: Row(
+            children: [
+              Icon(
+                Icons.question_answer, // Choose the appropriate icon
+                color: Colors.green, // Set the icon color to green
+                size: 24, // Adjust the icon size
+              ),
+              SizedBox(width: 12), // Add space between the icon and the text
+              Text(
+                'Create a New Blogs',
+                style: TextStyle(
+                  fontSize: 16, // Larger font size for the title
+                  fontWeight: FontWeight.bold, // Make the title bold
+                  color: Colors.green, // Set the text color to green
+                ),
+              ),
+            ],
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ), // Padding around the content
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setModalState) {
               return Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // Align content to the left
                 children: [
-                  DropdownButton<String>(
-                    value: selectedCategoryForNewQuestion,
-                    onChanged: (newValue) {
-                      setModalState(() {
-                        selectedCategoryForNewQuestion = newValue!;
-                      });
-                    },
-                    items: _categories
-                        .where((c) => c != 'All')
-                        .map((category) => DropdownMenuItem(
-                      value: category,
-                      child: Text(category),
-                    ))
-                        .toList(),
+                  Text(
+                    'Enter your question below:',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color:
+                          Colors.black87, // Darker text color for readability
+                    ),
                   ),
-                  SizedBox(height: 16),
+                  SizedBox(
+                    height: 12,
+                  ), // Space between the label and the text field
                   TextField(
-                    onChanged: (value) {
-                      newQuestion = value;
-                    },
+                    controller: _TopicController,
                     maxLines: 6,
                     decoration: InputDecoration(
-                      labelText: 'Enter your question',
-                      border: OutlineInputBorder(),
+                      hintText: 'Type your question...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          8,
+                        ), // Rounded corners for the text field
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.green,
+                          width: 2,
+                        ), // Green focus border
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
+                      ),
                     ),
                   ),
                 ],
               );
             },
           ),
+          actionsPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ), // Padding for the buttons
           actions: [
-            TextButton(
+            ElevatedButton(
               onPressed: () {
-                if (newQuestion.trim().isNotEmpty) {
-                  setState(() {
-                    _questions.add({
-                      'title': newQuestion.trim(),
-                      'category': selectedCategoryForNewQuestion,
-                      'question': newQuestion.trim(),
-                      'replies': [],
-                      'newReply': '',
-                      'isExpanded': false,
-                    });
-                  });
+                String newQuestion = _TopicController.text.trim();
+
+                if (newQuestion.isNotEmpty) {
+                  print(newQuestion);
+                  ForumService.createForum(newQuestion);
+                  _loadForums();
+
+                  // Display confirmation message at the top of the screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('New question posted!'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
                 }
+                _TopicController.clear();
                 Navigator.pop(context);
               },
-              child: Text('Submit'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    Colors.green, // Use backgroundColor instead of primary
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    8,
+                  ), // Rounded corners for the button
+                ),
+              ),
+              child: Text(
+                'Submit',
+                style: TextStyle(
+                  color: Colors.white, // White text for the button
+                  fontSize: 16,
+                ),
+              ),
             ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
+          ],
+        );
+      },
+    );
+  }
+
+  void _openCreateQuestionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(
+              16,
+            ), // Rounded corners for the dialog
+          ),
+          backgroundColor: Colors.white, // White background for the dialog
+          titlePadding: EdgeInsets.all(16), // Padding for the title
+          title: Row(
+            children: [
+              Icon(
+                Icons.question_answer, // Choose the appropriate icon
+                color: Colors.green, // Set the icon color to green
+                size: 24, // Adjust the icon size
+              ),
+              SizedBox(width: 12), // Add space between the icon and the text
+              Text(
+                'Create a New Question',
+                style: TextStyle(
+                  fontSize: 16, // Larger font size for the title
+                  fontWeight: FontWeight.bold, // Make the title bold
+                  color: Colors.green, // Set the text color to green
+                ),
+              ),
+            ],
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ), // Padding around the content
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setModalState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // Align content to the left
+                children: [
+                  Text(
+                    'Enter your question below:',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color:
+                          Colors.black87, // Darker text color for readability
+                    ),
+                  ),
+                  SizedBox(
+                    height: 12,
+                  ), // Space between the label and the text field
+                  TextField(
+                    controller: _TopicController,
+                    maxLines: 6,
+                    decoration: InputDecoration(
+                      hintText: 'Type your question...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          8,
+                        ), // Rounded corners for the text field
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.green,
+                          width: 2,
+                        ), // Green focus border
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          actionsPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ), // Padding for the buttons
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                String newQuestion = _TopicController.text.trim();
+
+                if (newQuestion.isNotEmpty) {
+                  print(newQuestion);
+                  ForumService.createForum(newQuestion);
+                  _loadForums();
+
+                  // Display confirmation message at the top of the screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('New question posted!'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+                _TopicController.clear();
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    Colors.green, // Use backgroundColor instead of primary
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    8,
+                  ), // Rounded corners for the button
+                ),
+              ),
+              child: Text(
+                'Submit',
+                style: TextStyle(
+                  color: Colors.white, // White text for the button
+                  fontSize: 16,
+                ),
+              ),
             ),
           ],
         );
@@ -162,51 +321,33 @@ class _ForumPageState extends State<ForumPage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Search for keywords',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: Colors.grey[100],
-            ),
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
-          ),
-        ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: _categories.map((category) {
-              final isSelected = _selectedCategory == category;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ChoiceChip(
-                  label: Text(category),
-                  selected: isSelected,
-                  selectedColor: Color(0xFF66CA6A),
-                  onSelected: (_) {
-                    setState(() {
-                      _selectedCategory = category;
-                    });
-                  },
-                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
+        // Padding(
+        //   padding: const EdgeInsets.all(16.0),
+        //   child: TextField(
+        //     decoration: InputDecoration(
+        //       hintText: 'Search for keywords',
+        //       prefixIcon: Icon(Icons.search),
+        //       border: OutlineInputBorder(
+        //         borderRadius: BorderRadius.circular(12),
+        //       ),
+        //       filled: true,
+        //       fillColor: Colors.grey[100],
+        //     ),
+        //     onChanged: (value) {
+        //       setState(() {
+        //         _searchQuery = value;
+        //       });
+        //     },
+        //   ),
+        // ),
         Row(
           children: [
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(left: 16, right: 8, top: 12, bottom: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 12,
+                ),
                 child: ElevatedButton(
                   onPressed: () {
                     setState(() {
@@ -214,8 +355,10 @@ class _ForumPageState extends State<ForumPage> {
                     });
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isViewingBlogs ? Color(0xFF66CA6A) : Colors.grey[300],
-                    foregroundColor: _isViewingBlogs ? Colors.white : Colors.black,
+                    backgroundColor:
+                        _isViewingBlogs ? Color(0xFF66CA6A) : Colors.grey[300],
+                    foregroundColor:
+                        _isViewingBlogs ? Colors.white : Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -227,7 +370,10 @@ class _ForumPageState extends State<ForumPage> {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(left: 8, right: 16, top: 12, bottom: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 12,
+                ),
                 child: ElevatedButton(
                   onPressed: () {
                     setState(() {
@@ -235,8 +381,10 @@ class _ForumPageState extends State<ForumPage> {
                     });
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: !_isViewingBlogs ? Color(0xFF66CA6A) : Colors.grey[300],
-                    foregroundColor: !_isViewingBlogs ? Colors.white : Colors.black,
+                    backgroundColor:
+                        !_isViewingBlogs ? Color(0xFF66CA6A) : Colors.grey[300],
+                    foregroundColor:
+                        !_isViewingBlogs ? Colors.white : Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -248,110 +396,233 @@ class _ForumPageState extends State<ForumPage> {
             ),
           ],
         ),
+        if (!_isViewingBlogs)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
+                onPressed: _openCreateQuestionDialog,
+                child: Text('Ask a Question'),
+              ),
+            ),
+          ),
         Expanded(
           child: ListView.builder(
             padding: EdgeInsets.all(16),
-            itemCount: _isViewingBlogs ? _blogs.length : _displayedQuestions.length,
+            itemCount: _isViewingBlogs ? _blogs.length : _myQuestions.length,
             itemBuilder: (context, index) {
               if (_isViewingBlogs) {
-                final blog = _blogs[index];
-                return Card(
-                  margin: EdgeInsets.only(bottom: 12),
-                  elevation: 3,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Image.asset(
-                        blog['image']!,
-                        width: double.infinity,
-                        height: 200,
-                        fit: BoxFit.cover,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text(blog['title']!, style: TextStyle(fontSize: 16)),
+                      child: ElevatedButton.icon(
+                        onPressed: _openCreateBlog,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: Icon(Icons.create),
+                        label: Text(
+                          'Create New Blog',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Card(
+                      margin: EdgeInsets.only(bottom: 12),
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Image.network(
+                            "https://nutrisafari.xyz/storage/${_blogs[index]['image_url']!}",
+                            width: double.infinity,
+                            height: 200,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (context, error, stackTrace) =>
+                                    Icon(Icons.broken_image),
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(child: CircularProgressIndicator());
+                            },
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(
+                              _blogs[index]['title']!,
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               } else {
-                final question = _displayedQuestions[index];
+                final question = _myQuestions[index];
+
+                if (!_replyControllers.containsKey(index)) {
+                  _replyControllers[index] = TextEditingController();
+                }
                 return Card(
                   margin: EdgeInsets.only(bottom: 12),
                   elevation: 3,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: ExpansionTile(
-                    title: Text(question['title']),
-                    subtitle: Text(question['category'], style: TextStyle(color: Colors.grey)),
-                    initiallyExpanded: question['isExpanded'],
-                    onExpansionChanged: (expanded) {
-                      setState(() {
-                        question['isExpanded'] = expanded;
-                      });
-                    },
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-                        child: Text('Question: ${question['question']}'),
+                    title: Text(
+                      question['title'],
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
-                      if (question['replies'].isNotEmpty)
+                    ),
+                    initiallyExpanded: false,
+                    children: [
+                      if (question['posts_count'] > 0)
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: question['replies']
-                                .map<Widget>((reply) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4.0),
-                              child: Text(
-                                '${reply['role']}: ${reply['text']}',
-                                style: TextStyle(
-                                  fontStyle: reply['role'] == 'Health Worker'
-                                      ? FontStyle.italic
-                                      : FontStyle.normal,
-                                ),
-                              ),
-                            ))
-                                .toList(),
+                            children:
+                                question['posts'].map<Widget>((reply) {
+                                  bool isCurrentUser =
+                                      reply['user']['is_me'] ?? false;
+
+                                  return Align(
+                                    alignment:
+                                        isCurrentUser
+                                            ? Alignment.centerRight
+                                            : Alignment.centerLeft,
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 6,
+                                      ),
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            isCurrentUser
+                                                ? Colors.blue[50]
+                                                : Colors.green[50],
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(12),
+                                          topRight: Radius.circular(12),
+                                          bottomLeft:
+                                              isCurrentUser
+                                                  ? Radius.circular(12)
+                                                  : Radius.circular(0),
+                                          bottomRight:
+                                              isCurrentUser
+                                                  ? Radius.circular(0)
+                                                  : Radius.circular(12),
+                                        ),
+                                        border: Border.all(
+                                          color:
+                                              isCurrentUser
+                                                  ? Colors.blue.shade300
+                                                  : Colors.green.shade300,
+                                        ),
+                                      ),
+                                      child: RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text:
+                                                  '${reply['user']['name']}: ',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color:
+                                                    isCurrentUser
+                                                        ? Colors.blue[800]
+                                                        : Colors.green[800],
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: reply['body'],
+                                              style: TextStyle(
+                                                color:
+                                                    isCurrentUser
+                                                        ? Colors.blue[900]
+                                                        : Colors.green[900],
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
                           ),
                         ),
                       Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                onChanged: (value) {
-                                  setState(() {
-                                    question['newReply'] = value;
-                                  });
-                                },
-                                decoration: InputDecoration(
-                                  hintText: 'Write a reply...',
-                                  contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        child: TextField(
+                          controller: _replyControllers[index],
+                          decoration: InputDecoration(
+                            labelText: 'Add a reply',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              String replyText =
+                                  _replyControllers[index]!.text.trim();
+                              if (replyText.isNotEmpty) {
+                                PostService.createForum(
+                                  replyText,
+                                  question['id'],
+                                );
+                                _loadForums();
+                                _replyControllers[index]!.clear();
+                              }
+                            },
+                            icon: Icon(Icons.send),
+                            label: Text('Submit Reply'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[600],
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            SizedBox(width: 8),
-                            ElevatedButton(
-                              onPressed: () {
-                                if ((question['newReply'] ?? '').trim().isNotEmpty) {
-                                  setState(() {
-                                    question['replies'].add({
-                                      'text': question['newReply'].trim(),
-                                      'role': 'Parent',
-                                    });
-                                    question['newReply'] = '';
-                                  });
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF66CA6A),
-                              ),
-                              child: Text('Send'),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ],
@@ -361,42 +632,6 @@ class _ForumPageState extends State<ForumPage> {
             },
           ),
         ),
-        if (!_isViewingBlogs)
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _openCreateQuestionDialog,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF66CA6A),
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text('Ask a Question'),
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _showingMyQuestions = !_showingMyQuestions;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _showingMyQuestions ? Color(0xFF66CA6A) : Colors.grey[300],
-                      foregroundColor: _showingMyQuestions ? Colors.white : Colors.black,
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text(_showingMyQuestions ? 'All Questions' : 'My Questions'),
-                  ),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }
