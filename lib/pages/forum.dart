@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:test_app/services/blog_service.dart';
 import 'package:test_app/services/forum_service.dart';
 import 'package:test_app/services/post_service.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+
+File? _selectedFile;
 
 class ForumPage extends StatefulWidget {
   const ForumPage({super.key});
@@ -12,6 +16,8 @@ class ForumPage extends StatefulWidget {
 
 class _ForumPageState extends State<ForumPage> {
   final _TopicController = TextEditingController();
+  final _TitleController = TextEditingController();
+  final _BodyController = TextEditingController();
 
   final _replyController = TextEditingController();
   String _searchQuery = '';
@@ -69,67 +75,46 @@ class _ForumPageState extends State<ForumPage> {
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(
-              16,
-            ), // Rounded corners for the dialog
+            borderRadius: BorderRadius.circular(16),
           ),
-          backgroundColor: Colors.white, // White background for the dialog
-          titlePadding: EdgeInsets.all(16), // Padding for the title
+          backgroundColor: Colors.white,
+          titlePadding: EdgeInsets.all(16),
           title: Row(
             children: [
-              Icon(
-                Icons.question_answer, // Choose the appropriate icon
-                color: Colors.green, // Set the icon color to green
-                size: 24, // Adjust the icon size
-              ),
-              SizedBox(width: 12), // Add space between the icon and the text
+              Icon(Icons.question_answer, color: Colors.green, size: 24),
+              SizedBox(width: 12),
               Text(
-                'Create a New Blogs',
+                'Create a New Blog',
                 style: TextStyle(
-                  fontSize: 16, // Larger font size for the title
-                  fontWeight: FontWeight.bold, // Make the title bold
-                  color: Colors.green, // Set the text color to green
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
                 ),
               ),
             ],
           ),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ), // Padding around the content
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setModalState) {
               return Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment:
-                    CrossAxisAlignment.start, // Align content to the left
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Enter your question below:',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color:
-                          Colors.black87, // Darker text color for readability
-                    ),
+                    'Enter your blog content:',
+                    style: TextStyle(fontSize: 16, color: Colors.black87),
                   ),
-                  SizedBox(
-                    height: 12,
-                  ), // Space between the label and the text field
+                  SizedBox(height: 12),
                   TextField(
-                    controller: _TopicController,
-                    maxLines: 6,
+                    controller: _TitleController,
+                    maxLines: 1,
                     decoration: InputDecoration(
-                      hintText: 'Type your question...',
+                      hintText: 'Type your blog...',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          8,
-                        ), // Rounded corners for the text field
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.green,
-                          width: 2,
-                        ), // Green focus border
+                        borderSide: BorderSide(color: Colors.green, width: 2),
                       ),
                       contentPadding: EdgeInsets.symmetric(
                         vertical: 12,
@@ -137,51 +122,143 @@ class _ForumPageState extends State<ForumPage> {
                       ),
                     ),
                   ),
+                  TextField(
+                    controller: _BodyController,
+                    maxLines: 1,
+                    decoration: InputDecoration(
+                      hintText: 'Type your blog...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.green, width: 2),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      // Show bottom sheet with options to pick file or take a photo
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: Icon(Icons.image),
+                                title: Text("Pick from Gallery"),
+                                // onTap: () async {
+                                //   FilePickerResult? result = await FilePicker
+                                //       .platform
+                                //       .pickFiles(type: FileType.image);
+
+                                //   if (result != null &&
+                                //       result.files.single.path != null) {
+                                //     setModalState(() {
+                                //       _selectedFile = File(
+                                //         result.files.single.path!,
+                                //       );
+                                //     });
+                                //   }
+
+                                //   Navigator.pop(context);
+                                // },
+                              ),
+                              ListTile(
+                                leading: Icon(Icons.camera_alt),
+                                title: Text("Open Camera"),
+                                onTap: () async {
+                                  final picker = ImagePicker();
+                                  final pickedFile = await picker.pickImage(
+                                    source:
+                                        ImageSource
+                                            .camera, // Explicitly set camera source
+                                    maxWidth: 600,
+                                  );
+
+                                  if (pickedFile != null) {
+                                    setModalState(() {
+                                      _selectedFile = File(pickedFile.path);
+                                    });
+                                  }
+
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: Icon(Icons.image, color: Colors.white),
+                    label: Text(
+                      'Select Image',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  if (_selectedFile != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Image.file(
+                        _selectedFile!,
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                 ],
               );
             },
           ),
-          actionsPadding: EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ), // Padding for the buttons
+          actionsPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           actions: [
             ElevatedButton(
               onPressed: () {
-                String newQuestion = _TopicController.text.trim();
+                String blogTitle = _TitleController.text.trim();
+                String blogBody = _BodyController.text.trim();
 
-                if (newQuestion.isNotEmpty) {
-                  print(newQuestion);
-                  ForumService.createForum(newQuestion);
-                  _loadForums();
+                if (blogTitle.isNotEmpty && blogBody.isNotEmpty) {
+                  print('Blog: $blogTitle ');
+                  print('Blog: $blogBody ');
 
-                  // Display confirmation message at the top of the screen
+                  print('Image: ${_selectedFile?.path}');
+
+                  // TODO: Call your blog creation API/service here with _selectedFile and newQuestion
+
+                  _TopicController.clear();
+                  _selectedFile = null;
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('New question posted!'),
+                      content: Text('New blog posted!'),
                       backgroundColor: Colors.green,
                       duration: Duration(seconds: 2),
                     ),
                   );
+                  Navigator.pop(context);
                 }
-                _TopicController.clear();
-                Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    Colors.green, // Use backgroundColor instead of primary
+                backgroundColor: Colors.green,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(
-                    8,
-                  ), // Rounded corners for the button
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: Text(
                 'Submit',
-                style: TextStyle(
-                  color: Colors.white, // White text for the button
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
           ],
