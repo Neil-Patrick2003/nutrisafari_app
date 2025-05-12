@@ -21,6 +21,7 @@ class _ChildPageState extends State<ChildPage> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
+      // Fetch data asynchronously
       future: _childrenData,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -152,43 +153,90 @@ class _ChildPageState extends State<ChildPage> {
       'BMI Category': bmiCategory,
     };
 
-    return indicators.entries.map((entry) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          children: [
-            Icon(
-              entry.key == 'Name'
-                  ? Icons.person
-                  : entry.key == 'Age'
-                  ? Icons.calendar_today
-                  : entry.key == 'BMI'
-                  ? Icons.fitness_center
-                  : Icons.category,
-              color: const Color(0xFF66CA6A),
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    entry.key,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF66CA6A),
-                    ),
+    // List of widgets to display
+    List<Widget> indicatorWidgets =
+        indicators.entries.map((entry) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Row(
+              children: [
+                Icon(
+                  entry.key == 'Name'
+                      ? Icons.person
+                      : entry.key == 'Age'
+                      ? Icons.calendar_today
+                      : entry.key == 'BMI'
+                      ? Icons.fitness_center
+                      : Icons.category,
+                  color: const Color(0xFF66CA6A),
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry.key,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF66CA6A),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(entry.value, style: const TextStyle(fontSize: 14)),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(entry.value, style: const TextStyle(fontSize: 14)),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          );
+        }).toList();
+
+    // Adding the enrolled programs to the indicator list
+    final programs = childData['enrolled_programs'] as List<dynamic>;
+    if (programs.isNotEmpty) {
+      indicatorWidgets.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            children: [
+              Icon(Icons.school, color: const Color(0xFF66CA6A), size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Enrolled Programs',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF66CA6A),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Displaying each enrolled program
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children:
+                          programs.map<Widget>((program) {
+                            return Text(
+                              program['title'] ?? 'N/A',
+                              style: const TextStyle(fontSize: 14),
+                            );
+                          }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       );
-    }).toList();
+    }
+
+    return indicatorWidgets;
   }
 }

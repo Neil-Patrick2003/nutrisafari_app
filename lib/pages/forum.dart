@@ -96,7 +96,7 @@ class _ForumPageState extends State<ForumPage> {
               Text(
                 'Create a New Blog',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
                 ),
@@ -119,7 +119,7 @@ class _ForumPageState extends State<ForumPage> {
                     controller: _TitleController,
                     maxLines: 1,
                     decoration: InputDecoration(
-                      hintText: 'Type your blog...',
+                      hintText: 'Enter your blog title...',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -132,11 +132,12 @@ class _ForumPageState extends State<ForumPage> {
                       ),
                     ),
                   ),
+                  SizedBox(height: 12),
                   TextField(
                     controller: _BodyController,
-                    maxLines: 1,
+                    maxLines: 5,
                     decoration: InputDecoration(
-                      hintText: 'Type your blog...',
+                      hintText: 'Enter your blog content...',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -149,86 +150,102 @@ class _ForumPageState extends State<ForumPage> {
                       ),
                     ),
                   ),
+                  SizedBox(height: 16),
 
-                  SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      // Show bottom sheet with options to pick file or take a photo
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ListTile(
-                                leading: Icon(Icons.image),
-                                title: Text("Pick from Gallery"),
-                                onTap: () async {
-                                  FilePickerResult? result = await FilePicker
-                                      .platform
-                                      .pickFiles(
-                                        withData: false,
-                                        type: FileType.image,
-                                        allowMultiple: false,
+                  // Choose File button
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Choose a file or take a photo:",
+                        style: TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
+                      SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          // Show bottom sheet with options to pick file or take a photo
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: Icon(Icons.image),
+                                    title: Text("Pick from Gallery"),
+                                    onTap: () async {
+                                      FilePickerResult? result =
+                                          await FilePicker.platform.pickFiles(
+                                            withData: false,
+                                            type: FileType.image,
+                                            allowMultiple: false,
+                                          );
+
+                                      if (result != null &&
+                                          result.files.single.path != null) {
+                                        setState(() {
+                                          _selectedImage = File(
+                                            result.files.single.path!,
+                                          );
+                                        });
+                                      }
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: Icon(Icons.camera_alt),
+                                    title: Text("Open Camera"),
+                                    onTap: () async {
+                                      final picker = ImagePicker();
+                                      final pickedFile = await picker.pickImage(
+                                        source: ImageSource.camera,
+                                        maxWidth: 600,
                                       );
 
-                                  if (result != null &&
-                                      result.files.single.path != null) {
-                                    setState(() {
-                                      _selectedImage = File(
-                                        result.files.single.path!,
-                                      );
-                                    });
-                                  }
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              ListTile(
-                                leading: Icon(Icons.camera_alt),
-                                title: Text("Open Camera"),
-                                onTap: () async {
-                                  final picker = ImagePicker();
-                                  final pickedFile = await picker.pickImage(
-                                    source:
-                                        ImageSource
-                                            .camera, // Explicitly set camera source
-                                    maxWidth: 600,
-                                  );
+                                      if (pickedFile != null) {
+                                        setModalState(() {
+                                          _selectedFile = File(pickedFile.path);
+                                        });
+                                      }
 
-                                  if (pickedFile != null) {
-                                    setModalState(() {
-                                      _selectedFile = File(pickedFile.path);
-                                    });
-                                  }
-
-                                  Navigator.pop(context);
-                                },
-                              ),
-                            ],
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 20,
+                          ),
+                        ),
+                        icon: Icon(Icons.image, color: Colors.white),
+                        label: Text(
+                          'Select Image',
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ),
-                    ),
-                    icon: Icon(Icons.image, color: Colors.white),
-                    label: Text(
-                      'Select Image',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    ],
                   ),
+
                   if (_selectedFile != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Image.file(
-                        _selectedFile!,
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          _selectedFile!,
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                 ],
@@ -237,46 +254,74 @@ class _ForumPageState extends State<ForumPage> {
           ),
           actionsPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           actions: [
-            ElevatedButton(
-              onPressed: () {
-                String blogTitle = _TitleController.text.trim();
-                String blogBody = _BodyController.text.trim();
-
-                if (blogTitle.isNotEmpty &&
-                    blogBody.isNotEmpty &&
-                    _selectedImage != null) {
-                  print('Blog: $blogTitle ');
-                  print('Blog: $blogBody ');
-
-                  print('Image: ${_selectedFile?.path}');
-
-                  // TODO: Call your blog creation API/service here with _selectedFile and newQuestion
-
-                  BlogService.createBlog(blogTitle, blogBody, _selectedImage!);
-
-                  _TopicController.clear();
-                  _selectedFile = null;
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('New blog posted!'),
-                      backgroundColor: Colors.green,
-                      duration: Duration(seconds: 2),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Cancel Button
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  );
-                  Navigator.pop(context);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 30),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
                 ),
-              ),
-              child: Text(
-                'Submit',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
+
+                // Submit Button
+                ElevatedButton(
+                  onPressed: () {
+                    String blogTitle = _TitleController.text.trim();
+                    String blogBody = _BodyController.text.trim();
+
+                    if (blogTitle.isNotEmpty &&
+                        blogBody.isNotEmpty &&
+                        _selectedImage != null) {
+                      print('Blog Title: $blogTitle');
+                      print('Blog Body: $blogBody');
+                      print('Selected Image: ${_selectedFile?.path}');
+
+                      // Call blog creation API/service here with the selected image
+                      BlogService.createBlog(
+                        blogTitle,
+                        blogBody,
+                        _selectedImage!,
+                      );
+
+                      _TitleController.clear();
+                      _BodyController.clear();
+                      _selectedFile = null;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('New blog posted!'),
+                          backgroundColor: Colors.green,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 30),
+                  ),
+                  child: Text(
+                    'Submit',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ),
+              ],
             ),
           ],
         );
