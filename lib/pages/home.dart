@@ -152,7 +152,6 @@ class _HomePageContentState extends State<HomePageContent> {
               return Column(
                 children:
                     snapshot.data!.map((announcement) {
-                      // Format the created_at date to a readable string
                       String formattedDate =
                           announcement['created_at'] != null
                               ? DateTime.parse(
@@ -160,40 +159,71 @@ class _HomePageContentState extends State<HomePageContent> {
                               ).toLocal().toString()
                               : 'No date available';
 
-                      return Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(16),
-                        margin: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFEFFAEF),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Color(0xFF66CA6A)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "📢 ${announcement['title']}",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF66CA6A),
+                      return InkWell(
+                        // ✅ Return this
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder:
+                                (context) => AlertDialog(
+                                  title: Text("📢 ${announcement['title']}"),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text("🗓️ $formattedDate"),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        announcement['description'] ??
+                                            'No content available',
+                                      ),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text("Close"),
+                                    ),
+                                  ],
+                                ),
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(16),
+                          margin: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFEFFAEF),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Color(0xFF66CA6A)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "📢 ${announcement['title']}",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF66CA6A),
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 8),
-                            Text("🗓️ $formattedDate"),
-                            SizedBox(height: 8),
-                            Text(
-                              announcement['description'] ??
-                                  'No content available',
-                            ),
-                          ],
+                              SizedBox(height: 8),
+                              Text("🗓️ $formattedDate"),
+                              SizedBox(height: 8),
+                              Text(
+                                announcement['description'] ??
+                                    'No content available',
+                              ),
+                            ],
+                          ),
                         ),
                       );
-                    }).toList(),
+                    }).toList(), // ✅ This returns a list of widgets
               );
             },
           ),

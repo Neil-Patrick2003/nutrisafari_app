@@ -4,6 +4,7 @@ import 'package:test_app/services/forum_service.dart';
 import 'package:test_app/services/post_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 
 File? _selectedFile;
 
@@ -23,6 +24,8 @@ class _ForumPageState extends State<ForumPage> {
   String _searchQuery = '';
   bool _isViewingBlogs = true;
   bool _showingMyQuestions = false;
+
+  File? _selectedImage;
 
   late List<Map<String, dynamic>> _myQuestions;
   late List<Map<String, dynamic>> _blogs;
@@ -153,22 +156,25 @@ class _ForumPageState extends State<ForumPage> {
                               ListTile(
                                 leading: Icon(Icons.image),
                                 title: Text("Pick from Gallery"),
-                                // onTap: () async {
-                                //   FilePickerResult? result = await FilePicker
-                                //       .platform
-                                //       .pickFiles(type: FileType.image);
+                                onTap: () async {
+                                  FilePickerResult? result = await FilePicker
+                                      .platform
+                                      .pickFiles(
+                                        withData: false,
+                                        type: FileType.image,
+                                        allowMultiple: false,
+                                      );
 
-                                //   if (result != null &&
-                                //       result.files.single.path != null) {
-                                //     setModalState(() {
-                                //       _selectedFile = File(
-                                //         result.files.single.path!,
-                                //       );
-                                //     });
-                                //   }
-
-                                //   Navigator.pop(context);
-                                // },
+                                  if (result != null &&
+                                      result.files.single.path != null) {
+                                    setState(() {
+                                      _selectedImage = File(
+                                        result.files.single.path!,
+                                      );
+                                    });
+                                  }
+                                  Navigator.pop(context);
+                                },
                               ),
                               ListTile(
                                 leading: Icon(Icons.camera_alt),
@@ -229,13 +235,17 @@ class _ForumPageState extends State<ForumPage> {
                 String blogTitle = _TitleController.text.trim();
                 String blogBody = _BodyController.text.trim();
 
-                if (blogTitle.isNotEmpty && blogBody.isNotEmpty) {
+                if (blogTitle.isNotEmpty &&
+                    blogBody.isNotEmpty &&
+                    _selectedImage != null) {
                   print('Blog: $blogTitle ');
                   print('Blog: $blogBody ');
 
                   print('Image: ${_selectedFile?.path}');
 
                   // TODO: Call your blog creation API/service here with _selectedFile and newQuestion
+
+                  BlogService.createBlog(blogTitle, blogBody, _selectedImage!);
 
                   _TopicController.clear();
                   _selectedFile = null;

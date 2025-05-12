@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test_app/config.dart';
+import 'dart:io';
 
 class BlogService {
   static Future<List<Map<String, dynamic>>> fetchBlogs() async {
@@ -29,31 +30,55 @@ class BlogService {
     }
   }
 
-  static Future<String> createForum(
+  // Create a new forum post
+  static Future<String> createBlog(
     String title,
-    String body,
-    String imageUrl,
+    String bodyText,
+    File imageFile,
   ) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString("token");
+    String? token = prefs.getString("auth.token");
 
     if (token == null) {
       throw Exception("Authentication token is missing.");
     }
 
-    final response = await http.post(
-      Uri.parse("${Config.apiBaseUrl}/parent/blogs/create"),
-      headers: {
-        "Authorization": "Bearer $token",
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({"title": title, "body": body, "imageUrl": imageUrl}),
-    );
+    try {
+      var uri = Uri.parse("${Config.apiBaseUrl}/parent/blog");
+      var request = http.MultipartRequest('POST', uri);
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body)["message"];
-    } else {
-      throw Exception("Failed to create blogs");
+      request.headers['Authorization'] = "Bearer $token";
+      request.headers['Content-Type'] = 'multipart/form-data';
+      request.headers['Accept'] = 'application/json';
+
+      request.fields['title'] = title;
+      request.fields['body'] = bodyText;
+
+      // Add the image file
+      request.files.add(
+        await http.MultipartFile.fromPath('image', imageFile.path),
+      );
+
+      // Send the request
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      print("Response Body: ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var decodedResponse = jsonDecode(response.body);
+        print("Decoded Response: $decodedResponse");
+
+        if (decodedResponse != null && decodedResponse.containsKey("message")) {
+          return decodedResponse["message"];
+        } else {
+          throw Exception("Unexpected response format.");
+        }
+      } else {
+        throw Exception("Failed to create forum: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error creating forum: $e");
     }
   }
 }
