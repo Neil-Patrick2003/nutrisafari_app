@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'nutrition_controller.dart'; // Adjust the path as needed
+import 'package:test_app/services/nutrition_controller.dart';
 
 class NutritionPlanPage extends StatefulWidget {
   const NutritionPlanPage({Key? key}) : super(key: key);
@@ -19,7 +19,7 @@ class _NutritionPlanPageState extends State<NutritionPlanPage> {
   @override
   void initState() {
     super.initState();
-    _plans = NutritionController.fetchAllPlans();
+    _plans = NutritionService.fetchAllPlans();
   }
 
   @override
