@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:test_app/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:test_app/config.dart';
 
 class AnnouncementService {
-  static Future<List<Map<String, dynamic>>> fetchAllAnnouncement() async {
+  static Future<Map<String, List<Map<String, dynamic>>>>
+  fetchAnnouncementData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString("auth.token");
 
@@ -18,12 +19,26 @@ class AnnouncementService {
     );
 
     if (response.statusCode == 200) {
-      // Assuming 'data' is a list of maps in the response body
-      return List<Map<String, dynamic>>.from(jsonDecode(response.body)['data']);
+      final data = jsonDecode(response.body);
+
+      // Defensive check: Ensure the fields exist and are lists
+      final announcements =
+          data['announcements'] is List
+              ? List<Map<String, dynamic>>.from(data['announcements'])
+              : <Map<String, dynamic>>[];
+
+      final incomingEvents =
+          data['incoming_events'] is List
+              ? List<Map<String, dynamic>>.from(data['incoming_events'])
+              : <Map<String, dynamic>>[];
+
+      return {
+        "announcements": announcements,
+        "incoming_events": incomingEvents,
+      };
     } else {
-      // Add status code to the exception for better debugging
       throw Exception(
-        "Failed to load announcement. Status code: ${response.statusCode}",
+        "Failed to load data. Status code: ${response.statusCode}",
       );
     }
   }

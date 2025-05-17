@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 import 'package:test_app/pages/login.dart';
-import 'package:test_app/pages/child.dart'; // Import child.dart
+import 'package:test_app/pages/child.dart';
 import 'package:test_app/pages/forum.dart';
-import 'package:test_app/services/announcement_service.dart'; // Import forum.dart
+import 'package:test_app/services/announcement_service.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -17,11 +15,10 @@ class _HomePageState extends State<HomePage> {
   bool _scrolled = false;
   int _selectedIndex = 0;
 
-  // List of pages for the bottom navigation
   final List<Widget> _pages = [
-    HomePageContent(), // Home page
-    ChildPage(), // Child page placeholder
-    ForumPage(), // Forum page placeholder
+    const HomePageContent(),
+    const ChildPage(),
+    const ForumPage(),
   ];
 
   @override
@@ -32,15 +29,13 @@ class _HomePageState extends State<HomePage> {
           if (scrollNotification.metrics.axis == Axis.vertical) {
             bool isScrolled = scrollNotification.metrics.pixels > 0;
             if (_scrolled != isScrolled) {
-              setState(() {
-                _scrolled = isScrolled;
-              });
+              setState(() => _scrolled = isScrolled);
             }
           }
           return false;
         },
         child: NestedScrollView(
-          headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          headerSliverBuilder: (_, __) {
             return [
               SliverAppBar(
                 automaticallyImplyLeading: false,
@@ -48,12 +43,12 @@ class _HomePageState extends State<HomePage> {
                 pinned: true,
                 backgroundColor: Colors.white,
                 expandedHeight: 100,
+                elevation: 2,
                 flexibleSpace: FlexibleSpaceBar(
                   centerTitle: _scrolled,
-                  titlePadding: EdgeInsets.only(
-                    left: 16,
-                    right: 16,
-                    bottom: 16,
+                  titlePadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
                   ),
                   title: Row(
                     mainAxisAlignment:
@@ -64,26 +59,36 @@ class _HomePageState extends State<HomePage> {
                       Text(
                         "NutriSafari",
                         style: TextStyle(
-                          color: Colors.green,
+                          color: const Color(0xFF66CA6A),
                           fontWeight: FontWeight.bold,
-                          fontSize: 20,
+                          fontSize: 24,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black12,
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
                         ),
                       ),
                       if (!_scrolled)
-                        GestureDetector(
+                        InkWell(
+                          borderRadius: BorderRadius.circular(24),
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => LoginPage(),
-                              ), // Redirect to LoginPage
+                              MaterialPageRoute(builder: (_) => LoginPage()),
                             );
                           },
-                          child: SvgPicture.asset(
-                            'assets/icons/logout.svg',
-                            width: 24,
-                            height: 24,
-                            color: Colors.redAccent,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/logout.svg',
+                              width: 28,
+                              height: 28,
+                              color: Colors.redAccent,
+                              semanticsLabel: 'Logout',
+                            ),
                           ),
                         ),
                     ],
@@ -92,17 +97,16 @@ class _HomePageState extends State<HomePage> {
               ),
             ];
           },
-          body: _pages[_selectedIndex], // Display the selected page
+          body: _pages[_selectedIndex],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index; // Update the selected page
-          });
-        },
-        items: const <BottomNavigationBarItem>[
+        onTap: (index) => setState(() => _selectedIndex = index),
+        selectedItemColor: const Color(0xFF66CA6A),
+        unselectedItemColor: Colors.grey.shade600,
+        showUnselectedLabels: true,
+        items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.child_care), label: 'Child'),
           BottomNavigationBarItem(icon: Icon(Icons.forum), label: 'Forum'),
@@ -112,7 +116,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// Home Page Content
 class HomePageContent extends StatefulWidget {
   const HomePageContent({super.key});
 
@@ -121,51 +124,79 @@ class HomePageContent extends StatefulWidget {
 }
 
 class _HomePageContentState extends State<HomePageContent> {
-  late Future<List<Map<String, dynamic>>> _announcements;
+  late Future<Map<String, List<Map<String, dynamic>>>> _dataFuture;
 
   @override
   void initState() {
     super.initState();
-    _announcements = AnnouncementService.fetchAllAnnouncement();
+    _dataFuture = AnnouncementService.fetchAnnouncementData();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Your other widgets (WELCOME, Latest News, etc.)
-          SizedBox(height: 16),
-          // Announcements Section
-          FutureBuilder<List<Map<String, dynamic>>>(
-            future: _announcements,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text("Error loading announcements"));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(child: Text("No announcements available"));
-              }
+    final theme = Theme.of(context);
+    return FutureBuilder<Map<String, List<Map<String, dynamic>>>>(
+      future: _dataFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return const Center(child: Text("Error loading data"));
+        }
 
-              return Column(
-                children:
-                    snapshot.data!.map((announcement) {
-                      String formattedDate =
-                          announcement['created_at'] != null
-                              ? DateTime.parse(
-                                announcement['created_at'],
-                              ).toLocal().toString()
-                              : 'No date available';
+        final announcements = snapshot.data?["announcements"] ?? [];
+        final incomingEvents = snapshot.data?["incoming_events"] ?? [];
 
-                      return InkWell(
-                        // ✅ Return this
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ImageSlideshow(slides: incomingEvents),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  child: Text(
+                    "📢 Announcements",
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green[800],
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...announcements.map((announcement) {
+                  String formattedDate = 'No date available';
+                  if (announcement['created_at'] != null) {
+                    try {
+                      final dt =
+                          DateTime.parse(announcement['created_at']).toLocal();
+                      formattedDate = "${dt.day}/${dt.month}/${dt.year}";
+                    } catch (_) {}
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    child: Material(
+                      color: const Color(0xFFEFFAEF),
+                      borderRadius: BorderRadius.circular(14),
+                      elevation: 1,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
                         onTap: () {
                           showDialog(
                             context: context,
                             builder:
-                                (context) => AlertDialog(
+                                (_) => AlertDialog(
                                   title: Text("📢 ${announcement['title']}"),
                                   content: Column(
                                     mainAxisSize: MainAxisSize.min,
@@ -173,7 +204,7 @@ class _HomePageContentState extends State<HomePageContent> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text("🗓️ $formattedDate"),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
                                       Text(
                                         announcement['description'] ??
                                             'No content available',
@@ -183,60 +214,62 @@ class _HomePageContentState extends State<HomePageContent> {
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
-                                      child: Text("Close"),
+                                      child: const Text("Close"),
                                     ),
                                   ],
                                 ),
                           );
                         },
-                        child: Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(16),
-                          margin: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Color(0xFFEFFAEF),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Color(0xFF66CA6A)),
-                          ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 "📢 ${announcement['title']}",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF66CA6A),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: const Color(0xFF66CA6A),
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              SizedBox(height: 8),
-                              Text("🗓️ $formattedDate"),
-                              SizedBox(height: 8),
+                              const SizedBox(height: 6),
+                              Text(
+                                "🗓️ $formattedDate",
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
                               Text(
                                 announcement['description'] ??
                                     'No content available',
+                                style: theme.textTheme.bodyMedium,
                               ),
                             ],
                           ),
                         ),
-                      );
-                    }).toList(), // ✅ This returns a list of widgets
-              );
-            },
+                      ),
+                    ),
+                  );
+                }).toList(),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-// Slideshow Widget
+// The _ImageSlideshow class can remain mostly the same, with small tweaks for style and padding.
+
 class _ImageSlideshow extends StatefulWidget {
+  final List<Map<String, dynamic>> slides;
+  const _ImageSlideshow({required this.slides});
+
   @override
-  _ImageSlideshowState createState() => _ImageSlideshowState();
+  State<_ImageSlideshow> createState() => _ImageSlideshowState();
 }
 
 class _ImageSlideshowState extends State<_ImageSlideshow> {
@@ -244,34 +277,21 @@ class _ImageSlideshowState extends State<_ImageSlideshow> {
   int _currentIndex = 0;
   Timer? _timer;
 
-  final List<Map<String, String>> _slides = [
-    {
-      'image': 'assets/images/healthy.jpeg',
-      'description': 'Healthy eating is key to strong immunity and growth!',
-    },
-    {
-      'image': 'assets/images/kids.jpg',
-      'description': 'Fruits are rich in vitamins and keep you energized!',
-    },
-    {
-      'image': 'assets/images/ice.jpg',
-      'description': 'Vegetables provide fiber for healthy digestion.',
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(Duration(seconds: 5), (timer) {
-      if (_controller.hasClients) {
-        int nextPage = (_currentIndex + 1) % _slides.length;
-        _controller.animateToPage(
-          nextPage,
-          duration: Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
+    if (widget.slides.isNotEmpty) {
+      _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+        if (_controller.hasClients) {
+          int next = (_currentIndex + 1) % widget.slides.length;
+          _controller.animateToPage(
+            next,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -283,74 +303,116 @@ class _ImageSlideshowState extends State<_ImageSlideshow> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.slides.isEmpty) return const SizedBox.shrink();
+
     return Column(
       children: [
-        // Slideshow
         SizedBox(
-          height: 180,
+          height: 220,
           child: PageView.builder(
             controller: _controller,
-            itemCount: _slides.length,
-            onPageChanged: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              return Column(
-                children: [
-                  Image.asset(
-                    _slides[index]['image']!,
-                    width: 150,
-                    height: 120,
-                    fit: BoxFit.cover,
+            itemCount: widget.slides.length,
+            onPageChanged: (i) => setState(() => _currentIndex = i),
+            itemBuilder: (_, index) {
+              final slide = widget.slides[index];
+              final imageUrl =
+                  "https://nutrisafari.xyz/storage/${slide['program_background_url']}";
+
+              String description = slide['description'] ?? "";
+              String truncatedDescription =
+                  description.length > 100
+                      ? description.substring(0, 100) + "..."
+                      : description;
+
+              String startingOnText = "";
+              if (slide['start_date'] != null &&
+                  slide['start_date'].toString().isNotEmpty) {
+                try {
+                  DateTime startDate = DateTime.parse(slide['start_date']);
+                  startingOnText =
+                      "Starting on ${startDate.toLocal().toString().split(' ')[0]}";
+                } catch (e) {
+                  startingOnText = "";
+                }
+              }
+
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.grey.shade100,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Column(
+                    children: [
+                      Image.network(
+                        imageUrl,
+                        width: double.infinity,
+                        height: 140,
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (_, __, ___) => const Icon(
+                              Icons.broken_image,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              truncatedDescription,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            if (startingOnText.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  startingOnText,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    _slides[index]['description']!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ],
+                ),
               );
             },
           ),
         ),
-
-        // Dots indicator
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            _slides.length,
+            widget.slides.length,
             (index) => Container(
-              margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
               width: 8,
               height: 8,
               decoration: BoxDecoration(
+                color:
+                    _currentIndex == index
+                        ? const Color(0xFF66CA6A)
+                        : Colors.grey.shade400,
                 shape: BoxShape.circle,
-                color: _currentIndex == index ? Color(0xFF66CA6A) : Colors.grey,
               ),
             ),
           ),
         ),
-
-        // Read More button
-        ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => HomePage()),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF66CA6A),
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: Text("Read More", style: TextStyle(color: Colors.white)),
-        ),
+        const SizedBox(height: 16),
       ],
     );
   }
