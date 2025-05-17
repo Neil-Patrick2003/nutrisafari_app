@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class BlogDetailPage extends StatelessWidget {
   final Map<String, dynamic> blog;
 
