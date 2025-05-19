@@ -5,6 +5,7 @@ import 'package:test_app/pages/login.dart';
 import 'package:test_app/pages/child.dart';
 import 'package:test_app/pages/forum.dart';
 import 'package:test_app/services/announcement_service.dart';
+import 'package:flutter_html/flutter_html.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -47,21 +48,23 @@ class _HomePageState extends State<HomePage> {
                 flexibleSpace: FlexibleSpaceBar(
                   centerTitle: _scrolled,
                   titlePadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
+                    horizontal: 24,
+                    vertical: 18,
                   ),
                   title: Row(
                     mainAxisAlignment:
                         _scrolled
                             ? MainAxisAlignment.center
                             : MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         "NutriSafari",
                         style: TextStyle(
                           color: const Color(0xFF66CA6A),
                           fontWeight: FontWeight.bold,
-                          fontSize: 24,
+                          fontSize: 26,
+                          letterSpacing: 1.2,
                           shadows: [
                             Shadow(
                               color: Colors.black12,
@@ -81,7 +84,7 @@ class _HomePageState extends State<HomePage> {
                             );
                           },
                           child: Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.all(8),
                             child: SvgPicture.asset(
                               'assets/icons/logout.svg',
                               width: 28,
@@ -150,109 +153,151 @@ class _HomePageContentState extends State<HomePageContent> {
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _ImageSlideshow(slides: incomingEvents),
-                const SizedBox(height: 20),
+                const SizedBox(height: 28),
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
+                    horizontal: 20,
+                    vertical: 8,
                   ),
                   child: Text(
                     "📢 Announcements",
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.green[800],
-                      letterSpacing: 0.8,
+                      letterSpacing: 1,
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...announcements.map((announcement) {
-                  String formattedDate = 'No date available';
-                  if (announcement['created_at'] != null) {
-                    try {
-                      final dt =
-                          DateTime.parse(announcement['created_at']).toLocal();
-                      formattedDate = "${dt.day}/${dt.month}/${dt.year}";
-                    } catch (_) {}
-                  }
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
-                    child: Material(
-                      color: const Color(0xFFEFFAEF),
-                      borderRadius: BorderRadius.circular(14),
-                      elevation: 1,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder:
-                                (_) => AlertDialog(
-                                  title: Text("📢 ${announcement['title']}"),
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text("🗓️ $formattedDate"),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        announcement['description'] ??
-                                            'No content available',
-                                      ),
-                                    ],
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text("Close"),
+                // Simple stack card list for announcements
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SizedBox(
+                    height: announcements.length * 120.0,
+                    child: Stack(
+                      children:
+                          announcements.asMap().entries.map((entry) {
+                            int index = entry.key;
+                            var announcement = entry.value;
+
+                            String formattedDate = 'No date available';
+                            if (announcement['created_at'] != null) {
+                              try {
+                                final dt =
+                                    DateTime.parse(
+                                      announcement['created_at'],
+                                    ).toLocal();
+                                formattedDate =
+                                    "${dt.day}/${dt.month}/${dt.year}";
+                              } catch (_) {}
+                            }
+
+                            return Positioned(
+                              top:
+                                  index *
+                                  140.0, // 130 instead of 110 adds 20px extra space
+                              left: 0,
+                              right: 0,
+                              child: Material(
+                                color: const Color(0xFFEFFAEF),
+                                borderRadius: BorderRadius.circular(16),
+                                elevation: 1.5,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(16),
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder:
+                                          (_) => AlertDialog(
+                                            title: Text(
+                                              "📢 ${announcement['title']}",
+                                            ),
+                                            content: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text("🗓️ $formattedDate"),
+                                                const SizedBox(height: 10),
+                                                Html(
+                                                  data:
+                                                      announcement['description'] ??
+                                                      'No content available',
+                                                  style: {
+                                                    "body": Style(
+                                                      fontSize: FontSize(14),
+                                                      color: Colors.black,
+                                                    ),
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () =>
+                                                        Navigator.pop(context),
+                                                child: const Text("Close"),
+                                              ),
+                                            ],
+                                          ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 18,
+                                      horizontal: 12,
                                     ),
-                                  ],
-                                ),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "📢 ${announcement['title']}",
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  color: const Color(0xFF66CA6A),
-                                  fontWeight: FontWeight.w600,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "📢 ${announcement['title']}",
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                                color: const Color(0xFF66CA6A),
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          "🗓️ $formattedDate",
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: Colors.grey[700],
+                                              ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Html(
+                                          data:
+                                              announcement['description'] ??
+                                              'No content available',
+                                          style: {
+                                            "body": Style(
+                                              fontSize: FontSize(14),
+                                              color: Colors.black,
+                                            ),
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                "🗓️ $formattedDate",
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: Colors.grey[700],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                announcement['description'] ??
-                                    'No content available',
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                            );
+                          }).toList(),
                     ),
-                  );
-                }).toList(),
-                const SizedBox(height: 24),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -261,8 +306,6 @@ class _HomePageContentState extends State<HomePageContent> {
     );
   }
 }
-
-// The _ImageSlideshow class can remain mostly the same, with small tweaks for style and padding.
 
 class _ImageSlideshow extends StatefulWidget {
   final List<Map<String, dynamic>> slides;
@@ -321,73 +364,103 @@ class _ImageSlideshowState extends State<_ImageSlideshow> {
               String description = slide['description'] ?? "";
               String truncatedDescription =
                   description.length > 100
-                      ? description.substring(0, 100) + "..."
+                      ? "${description.substring(0, 100)}..."
                       : description;
 
               String startingOnText = "";
-              if (slide['start_date'] != null &&
-                  slide['start_date'].toString().isNotEmpty) {
+              if (slide['start_date'] != null) {
                 try {
-                  DateTime startDate = DateTime.parse(slide['start_date']);
+                  final dt = DateTime.parse(slide['start_date']).toLocal();
                   startingOnText =
-                      "Starting on ${startDate.toLocal().toString().split(' ')[0]}";
-                } catch (e) {
-                  startingOnText = "";
-                }
+                      "Starting on: ${dt.day}/${dt.month}/${dt.year}";
+                } catch (_) {}
               }
 
               return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.grey.shade100,
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Column(
-                    children: [
-                      Image.network(
-                        imageUrl,
-                        width: double.infinity,
-                        height: 140,
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (_, __, ___) => const Icon(
-                              Icons.broken_image,
-                              size: 60,
-                              color: Colors.grey,
-                            ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: [
-                            Text(
-                              truncatedDescription,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontStyle: FontStyle.italic,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            if (startingOnText.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  startingOnText,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.white,
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      offset: Offset(0, 6),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (_, __, ___) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.broken_image, size: 80),
+                          ),
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(child: CircularProgressIndicator());
+                      },
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withOpacity(0.7),
+                            Colors.transparent,
                           ],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            slide['program_title'] ?? 'Untitled',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(blurRadius: 4, color: Colors.black),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            truncatedDescription,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          if (startingOnText.isNotEmpty)
+                            Text(
+                              startingOnText,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.lightGreenAccent,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
@@ -396,23 +469,21 @@ class _ImageSlideshowState extends State<_ImageSlideshow> {
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            widget.slides.length,
-            (index) => Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
+          children: List.generate(widget.slides.length, (index) {
+            return Container(
               width: 8,
               height: 8,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
+                shape: BoxShape.circle,
                 color:
                     _currentIndex == index
-                        ? const Color(0xFF66CA6A)
-                        : Colors.grey.shade400,
-                shape: BoxShape.circle,
+                        ? Colors.green[600]
+                        : Colors.grey[400],
               ),
-            ),
-          ),
+            );
+          }),
         ),
-        const SizedBox(height: 16),
       ],
     );
   }
