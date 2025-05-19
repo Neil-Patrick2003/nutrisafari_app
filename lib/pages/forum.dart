@@ -55,7 +55,7 @@ class _ForumPageState extends State<ForumPage> {
   }
 
   // Asynchronous method to load forum data
-  Future<void> _loadForums() async {
+  Future<void>  _loadForums() async {
     try {
       List<Map<String, dynamic>> forums = await ForumService.fetchAllForums();
       setState(() {
@@ -763,8 +763,9 @@ class _ForumPageState extends State<ForumPage> {
                                     replyText,
                                     question['id'],
                                   );
-                                  _loadForums();
+
                                   _replyControllers[index]!.clear();
+                                  _loadForums();
                                 }
                               },
                               icon: Icon(Icons.send),
